@@ -23,7 +23,7 @@ const addMyomaButton = document.querySelector("#add-myoma");
 const myomaList = document.querySelector("#myoma-list");
 const markerSurfaces = document.querySelectorAll("[data-marker-surface]");
 
-let myomaCounter = 0;
+let myomaIdCounter = 0;
 
 const getCaptionParts = (fileName) => fileName.replace(/\.png$/i, "").split("-");
 const getCaptionText = (fileName) => getCaptionParts(fileName).join(" ");
@@ -197,17 +197,24 @@ const makeMarkerInteractive = (marker) => {
   marker.addEventListener("pointercancel", stopInteraction);
 };
 
-const createMarker = (myomaNumber, category, surface) => {
-  const marker = document.createElement("button");
-  marker.className = "myoma-marker";
-  marker.type = "button";
-  marker.dataset.myomaNumber = myomaNumber;
-  marker.dataset.surface = surface.dataset.markerSurface;
+const getMyomaRows = () => [...myomaList.querySelectorAll("tr[data-myoma-id]")];
+
+const setMarkerLabel = (marker, myomaNumber, category) => {
   marker.textContent = category;
+  marker.dataset.myomaNumber = myomaNumber;
   marker.setAttribute(
     "aria-label",
     `Міома ${myomaNumber}, ${category}. Перетягніть коло по зображенню або потягніть за край, щоб змінити розмір.`,
   );
+};
+
+const createMarker = (myomaId, myomaNumber, category, surface) => {
+  const marker = document.createElement("button");
+  marker.className = "myoma-marker";
+  marker.type = "button";
+  marker.dataset.myomaId = myomaId;
+  marker.dataset.surface = surface.dataset.markerSurface;
+  setMarkerLabel(marker, myomaNumber, category);
 
   const startPosition = markerStartPositions[marker.dataset.surface];
   updateMarkerPosition(marker, startPosition.x, startPosition.y);
@@ -218,7 +225,7 @@ const createMarker = (myomaNumber, category, surface) => {
   return marker;
 };
 
-const createCategorySelect = (myomaNumber, initialCategory) => {
+const createCategorySelect = (myomaId, myomaNumber, initialCategory) => {
   const select = document.createElement("select");
   select.className = "figo-select";
   select.setAttribute("aria-label", `Категорія FIGO для утворення ${myomaNumber}`);
@@ -232,34 +239,74 @@ const createCategorySelect = (myomaNumber, initialCategory) => {
   });
 
   select.addEventListener("change", () => {
-    document.querySelectorAll(`[data-myoma-number="${myomaNumber}"]`).forEach((marker) => {
-      marker.textContent = select.value;
-      marker.setAttribute(
-        "aria-label",
-        `Міома ${myomaNumber}, ${select.value}. Перетягніть коло по зображенню або потягніть за край, щоб змінити розмір.`,
-      );
+    const row = select.closest("tr[data-myoma-id]");
+    const currentMyomaNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? myomaNumber;
+
+    document.querySelectorAll(`[data-myoma-id="${myomaId}"]`).forEach((marker) => {
+      setMarkerLabel(marker, currentMyomaNumber, select.value);
     });
   });
 
   return select;
 };
 
+const renumberMyomas = () => {
+  getMyomaRows().forEach((row, index) => {
+    const myomaNumber = index + 1;
+    const category = row.querySelector(".figo-select").value;
+
+    row.querySelector("[data-myoma-number-cell]").textContent = myomaNumber;
+    row.querySelector(".figo-select").setAttribute("aria-label", `Категорія FIGO для утворення ${myomaNumber}`);
+    row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
+
+    document.querySelectorAll(`[data-myoma-id="${row.dataset.myomaId}"]`).forEach((marker) => {
+      setMarkerLabel(marker, myomaNumber, category);
+    });
+  });
+};
+
+const deleteMyoma = (row) => {
+  document.querySelectorAll(`[data-myoma-id="${row.dataset.myomaId}"]`).forEach((marker) => marker.remove());
+  row.remove();
+  renumberMyomas();
+};
+
+const createDeleteButton = (row, myomaNumber) => {
+  const button = document.createElement("button");
+  button.className = "delete-myoma-button";
+  button.type = "button";
+  button.textContent = "×";
+  button.setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
+
+  button.addEventListener("click", () => deleteMyoma(row));
+
+  return button;
+};
+
 const addMyoma = () => {
-  myomaCounter += 1;
+  myomaIdCounter += 1;
+  const myomaId = String(myomaIdCounter);
+  const myomaNumber = getMyomaRows().length + 1;
   const category = figoCategories[0];
 
   const row = document.createElement("tr");
+  row.dataset.myomaId = myomaId;
 
   const numberCell = document.createElement("td");
-  numberCell.textContent = myomaCounter;
+  numberCell.dataset.myomaNumberCell = "";
+  numberCell.textContent = myomaNumber;
 
   const categoryCell = document.createElement("td");
-  categoryCell.append(createCategorySelect(myomaCounter, category));
+  categoryCell.append(createCategorySelect(myomaId, myomaNumber, category));
 
-  row.append(numberCell, categoryCell);
+  const actionCell = document.createElement("td");
+  actionCell.className = "myoma-action-cell";
+  actionCell.append(createDeleteButton(row, myomaNumber));
+
+  row.append(numberCell, categoryCell, actionCell);
   myomaList.append(row);
 
-  markerSurfaces.forEach((surface) => createMarker(myomaCounter, category, surface));
+  markerSurfaces.forEach((surface) => createMarker(myomaId, myomaNumber, category, surface));
 };
 
 renderGallery();
