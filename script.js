@@ -199,6 +199,9 @@ const makeMarkerInteractive = (marker) => {
 
 const getMyomaRows = () => [...myomaList.querySelectorAll("tr[data-myoma-id]")];
 
+const getMyomaMarkers = (myomaId) =>
+  document.querySelectorAll(`.myoma-marker[data-myoma-id="${myomaId}"]`);
+
 const setMarkerLabel = (marker, myomaNumber, category) => {
   marker.textContent = category;
   marker.dataset.myomaNumber = myomaNumber;
@@ -242,7 +245,7 @@ const createCategorySelect = (myomaId, myomaNumber, initialCategory) => {
     const row = select.closest("tr[data-myoma-id]");
     const currentMyomaNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? myomaNumber;
 
-    document.querySelectorAll(`[data-myoma-id="${myomaId}"]`).forEach((marker) => {
+    getMyomaMarkers(myomaId).forEach((marker) => {
       setMarkerLabel(marker, currentMyomaNumber, select.value);
     });
   });
@@ -259,14 +262,14 @@ const renumberMyomas = () => {
     row.querySelector(".figo-select").setAttribute("aria-label", `Категорія FIGO для утворення ${myomaNumber}`);
     row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
 
-    document.querySelectorAll(`[data-myoma-id="${row.dataset.myomaId}"]`).forEach((marker) => {
+    getMyomaMarkers(row.dataset.myomaId).forEach((marker) => {
       setMarkerLabel(marker, myomaNumber, category);
     });
   });
 };
 
 const deleteMyoma = (row) => {
-  document.querySelectorAll(`[data-myoma-id="${row.dataset.myomaId}"]`).forEach((marker) => marker.remove());
+  getMyomaMarkers(row.dataset.myomaId).forEach((marker) => marker.remove());
   row.remove();
   renumberMyomas();
 };
