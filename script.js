@@ -10,6 +10,10 @@ const markerStartPositions = {
   selected: { x: 50, y: 50 },
   reference: { x: 50, y: 50 },
 };
+const markerDefaultSize = 58;
+const markerMinSize = 34;
+const markerMaxSize = 140;
+const markerResizeEdgeWidth = 12;
 
 const gallery = document.querySelector("#gallery");
 const galleryView = document.querySelector("#gallery-view");
@@ -105,15 +109,64 @@ const updateMarkerPosition = (marker, x, y) => {
   marker.style.top = `${y}%`;
 };
 
-const makeMarkerDraggable = (marker) => {
+const updateMarkerSize = (marker, size) => {
+  const nextSize = clamp(size, markerMinSize, markerMaxSize);
+
+  marker.dataset.size = nextSize;
+  marker.style.setProperty("--marker-size", `${nextSize}px`);
+};
+
+const getPointerDistanceFromMarkerCenter = (marker, event) => {
+  const rect = marker.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const offsetX = event.clientX - centerX;
+  const offsetY = event.clientY - centerY;
+
+  return Math.hypot(offsetX, offsetY);
+};
+
+const isPointerOnMarkerEdge = (marker, event) => {
+  const radius = marker.getBoundingClientRect().width / 2;
+  const distance = getPointerDistanceFromMarkerCenter(marker, event);
+
+  return distance >= radius - markerResizeEdgeWidth;
+};
+
+const resizeMarkerFromPointer = (marker, event) => {
+  const stage = marker.parentElement;
+  const stageRect = stage.getBoundingClientRect();
+  const centerX = stageRect.left + (Number(marker.dataset.x) / 100) * stageRect.width;
+  const centerY = stageRect.top + (Number(marker.dataset.y) / 100) * stageRect.height;
+  const diameter = Math.hypot(event.clientX - centerX, event.clientY - centerY) * 2;
+
+  updateMarkerSize(marker, diameter);
+};
+
+const makeMarkerInteractive = (marker) => {
   marker.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     marker.setPointerCapture(event.pointerId);
+
+    if (isPointerOnMarkerEdge(marker, event)) {
+      marker.dataset.action = "resize";
+      marker.classList.add("is-resizing");
+      marker.classList.remove("is-resize-ready");
+      return;
+    }
+
+    marker.dataset.action = "drag";
     marker.classList.add("is-dragging");
   });
 
   marker.addEventListener("pointermove", (event) => {
     if (!marker.hasPointerCapture(event.pointerId)) {
+      marker.classList.toggle("is-resize-ready", isPointerOnMarkerEdge(marker, event));
+      return;
+    }
+
+    if (marker.dataset.action === "resize") {
+      resizeMarkerFromPointer(marker, event);
       return;
     }
 
@@ -125,16 +178,23 @@ const makeMarkerDraggable = (marker) => {
     updateMarkerPosition(marker, x, y);
   });
 
-  const stopDragging = (event) => {
+  marker.addEventListener("pointerleave", () => {
+    if (!marker.dataset.action) {
+      marker.classList.remove("is-resize-ready");
+    }
+  });
+
+  const stopInteraction = (event) => {
     if (marker.hasPointerCapture(event.pointerId)) {
       marker.releasePointerCapture(event.pointerId);
     }
 
-    marker.classList.remove("is-dragging");
+    delete marker.dataset.action;
+    marker.classList.remove("is-dragging", "is-resizing", "is-resize-ready");
   };
 
-  marker.addEventListener("pointerup", stopDragging);
-  marker.addEventListener("pointercancel", stopDragging);
+  marker.addEventListener("pointerup", stopInteraction);
+  marker.addEventListener("pointercancel", stopInteraction);
 };
 
 const createMarker = (myomaNumber, category, surface) => {
@@ -144,11 +204,15 @@ const createMarker = (myomaNumber, category, surface) => {
   marker.dataset.myomaNumber = myomaNumber;
   marker.dataset.surface = surface.dataset.markerSurface;
   marker.textContent = category;
-  marker.setAttribute("aria-label", `Міома ${myomaNumber}, ${category}. Перетягніть коло по зображенню.`);
+  marker.setAttribute(
+    "aria-label",
+    `Міома ${myomaNumber}, ${category}. Перетягніть коло по зображенню або потягніть за край, щоб змінити розмір.`,
+  );
 
   const startPosition = markerStartPositions[marker.dataset.surface];
   updateMarkerPosition(marker, startPosition.x, startPosition.y);
-  makeMarkerDraggable(marker);
+  updateMarkerSize(marker, markerDefaultSize);
+  makeMarkerInteractive(marker);
 
   surface.append(marker);
   return marker;
@@ -170,7 +234,10 @@ const createCategorySelect = (myomaNumber, initialCategory) => {
   select.addEventListener("change", () => {
     document.querySelectorAll(`[data-myoma-number="${myomaNumber}"]`).forEach((marker) => {
       marker.textContent = select.value;
-      marker.setAttribute("aria-label", `Міома ${myomaNumber}, ${select.value}. Перетягніть коло по зображенню.`);
+      marker.setAttribute(
+        "aria-label",
+        `Міома ${myomaNumber}, ${select.value}. Перетягніть коло по зображенню або потягніть за край, щоб змінити розмір.`,
+      );
     });
   });
 

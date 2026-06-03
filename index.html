@@ -19,36 +19,38 @@
 
       <section id="detail-view" class="view detail" hidden>
         <a class="back-link" href="./" aria-label="Повернутися до списку зображень">← Назад до вибору</a>
-        <div class="detail-layout" aria-label="Відкрите зображення та еталонне зображення матки">
-          <figure class="detail-card">
-            <div class="image-stage" data-marker-surface="selected">
-              <img id="detail-image" src="" alt="" />
+        <div class="detail-workspace">
+          <div class="detail-layout" aria-label="Відкрите зображення та еталонне зображення матки">
+            <figure class="detail-card">
+              <div class="image-stage" data-marker-surface="selected">
+                <img id="detail-image" src="" alt="" />
+              </div>
+            </figure>
+            <figure class="detail-card detail-card-reference">
+              <div class="image-stage" data-marker-surface="reference">
+                <img id="reference-image" src="uterus.png" alt="Еталонне зображення матки" />
+              </div>
+            </figure>
+          </div>
+
+          <section class="myoma-panel" aria-label="Міоми">
+            <div class="myoma-panel-header">
+              <button class="add-myoma-button" type="button" id="add-myoma" aria-label="Додати міому">+</button>
             </div>
-          </figure>
-          <figure class="detail-card detail-card-reference">
-            <div class="image-stage" data-marker-surface="reference">
-              <img id="reference-image" src="uterus.png" alt="Еталонне зображення матки" />
+
+            <div class="myoma-table-wrap">
+              <table class="myoma-table">
+                <thead>
+                  <tr>
+                    <th scope="col">№ утворення</th>
+                    <th scope="col">Категорія FIGO</th>
+                  </tr>
+                </thead>
+                <tbody id="myoma-list"></tbody>
+              </table>
             </div>
-          </figure>
+          </section>
         </div>
-
-        <section class="myoma-panel" aria-label="Міоми">
-          <div class="myoma-panel-header">
-            <button class="add-myoma-button" type="button" id="add-myoma" aria-label="Додати міому">+</button>
-          </div>
-
-          <div class="myoma-table-wrap">
-            <table class="myoma-table">
-              <thead>
-                <tr>
-                  <th scope="col">№ утворення</th>
-                  <th scope="col">Категорія FIGO</th>
-                </tr>
-              </thead>
-              <tbody id="myoma-list"></tbody>
-            </table>
-          </div>
-        </section>
       </section>
     </main>
 
