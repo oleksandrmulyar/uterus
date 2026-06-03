@@ -31,7 +31,7 @@ body {
 .app {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 56px 0;
+  padding: 44px 0;
 }
 
 .view {
@@ -50,30 +50,30 @@ body {
 h1 {
   max-width: 780px;
   margin: 0;
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(1.8rem, 4.2vw, 3.35rem);
   line-height: 1.04;
 }
 
 .lead {
   max-width: 650px;
-  margin: 18px 0 34px;
+  margin: 14px 0 28px;
   color: var(--muted);
-  font-size: 1.12rem;
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .gallery {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
+  gap: 18px;
 }
 
 .image-card {
   display: flex;
   min-height: 100%;
-  padding: 14px;
+  padding: 12px;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   color: inherit;
   text-decoration: none;
   background: rgba(255, 255, 255, 0.84);
@@ -111,9 +111,9 @@ h1 {
 
 .caption {
   color: var(--accent-dark);
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
   text-transform: lowercase;
 }
@@ -122,7 +122,7 @@ h1 {
   min-height: calc(100vh - 112px);
   display: grid;
   place-items: center;
-  gap: 24px;
+  gap: 18px;
 }
 
 .back-link {
@@ -148,7 +148,7 @@ h1 {
 .detail-card {
   min-width: 0;
   margin: 0;
-  padding: clamp(16px, 3vw, 28px);
+  padding: clamp(12px, 2.4vw, 22px);
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(128, 51, 72, 0.12);
   border-radius: 32px;
@@ -157,16 +157,11 @@ h1 {
 
 .detail-card img {
   max-height: 68vh;
-  padding: clamp(10px, 2vw, 18px);
+  padding: clamp(8px, 1.6vw, 14px);
 }
 
 .detail-card-reference {
   border-color: rgba(182, 79, 106, 0.24);
-}
-
-.detail-card .caption {
-  margin-top: 20px;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 @media (max-width: 900px) {
@@ -182,7 +177,7 @@ h1 {
 @media (max-width: 560px) {
   .app {
     width: min(100% - 20px, 1120px);
-    padding: 28px 0;
+    padding: 24px 0;
   }
 
   .gallery {
