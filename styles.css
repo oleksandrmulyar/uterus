@@ -139,8 +139,9 @@ h1 {
 
 .detail-layout {
   display: grid;
-  width: min(1120px, 100%);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(900px, 100%);
+  grid-template-columns: repeat(2, minmax(260px, 420px));
+  justify-content: center;
   gap: clamp(18px, 3vw, 28px);
   align-items: stretch;
 }
@@ -156,8 +157,8 @@ h1 {
 }
 
 .detail-card img {
-  max-height: 68vh;
-  padding: clamp(8px, 1.6vw, 14px);
+  max-height: 46vh;
+  padding: clamp(6px, 1.2vw, 10px);
 }
 
 .detail-card-reference {
@@ -170,7 +171,18 @@ h1 {
   }
 
   .detail-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 420px);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .myoma-panel-header {
+    flex-direction: column;
+  }
+
+  .add-myoma-button {
+    width: 100%;
   }
 }
 
@@ -199,4 +211,139 @@ h1 {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.image-stage {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 18px;
+  touch-action: none;
+}
+
+.myoma-marker {
+  position: absolute;
+  z-index: 2;
+  display: inline-grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  padding: 0;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  background: rgba(182, 79, 106, 0.92);
+  border: 3px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(91, 44, 58, 0.28);
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  user-select: none;
+}
+
+.myoma-marker:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.myoma-marker.is-dragging {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.myoma-panel {
+  width: min(900px, 100%);
+  padding: clamp(16px, 2.4vw, 24px);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(128, 51, 72, 0.12);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+.myoma-panel-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.myoma-panel h2 {
+  margin: 0;
+  color: var(--accent-dark);
+  font-size: clamp(1.25rem, 2.4vw, 1.65rem);
+}
+
+.myoma-panel p {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.add-myoma-button {
+  flex: 0 0 auto;
+  padding: 11px 16px;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(182, 79, 106, 0.28);
+  cursor: pointer;
+}
+
+.add-myoma-button:hover,
+.add-myoma-button:focus-visible {
+  background: var(--accent-dark);
+}
+
+.add-myoma-button:focus-visible,
+.figo-select:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.myoma-table-wrap {
+  overflow-x: auto;
+}
+
+.myoma-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid rgba(128, 51, 72, 0.12);
+  border-radius: 18px;
+}
+
+.myoma-table th,
+.myoma-table td {
+  padding: 13px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(128, 51, 72, 0.1);
+}
+
+.myoma-table th {
+  color: var(--accent-dark);
+  font-size: 0.86rem;
+  font-weight: 900;
+  background: rgba(255, 247, 244, 0.9);
+}
+
+.myoma-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.figo-select {
+  width: min(240px, 100%);
+  padding: 10px 12px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid rgba(128, 51, 72, 0.2);
+  border-radius: 12px;
 }
