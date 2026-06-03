@@ -39,12 +39,19 @@ const createCaption = (fileName) => {
   return caption;
 };
 
+const getImageUrl = (fileName) => `${window.location.pathname}?image=${encodeURIComponent(fileName)}`;
+
 const renderGallery = () => {
   images.forEach((fileName) => {
     const card = document.createElement("a");
     card.className = "image-card";
-    card.href = `?image=${encodeURIComponent(fileName)}`;
+    card.href = getImageUrl(fileName);
     card.setAttribute("aria-label", `Відкрити ${getCaptionText(fileName)}`);
+
+    card.addEventListener("click", (event) => {
+      event.preventDefault();
+      openImage(fileName);
+    });
 
     const image = document.createElement("img");
     image.src = fileName;
@@ -63,6 +70,30 @@ const renderDetail = (fileName) => {
   detailImage.src = fileName;
   detailImage.alt = getCaptionText(fileName);
   document.title = `${getCaptionText(fileName)} — Вибір положення матки`;
+};
+
+const openImage = (fileName) => {
+  if (!images.includes(fileName)) {
+    return;
+  }
+
+  renderDetail(fileName);
+  window.history.pushState({ image: fileName }, "", getImageUrl(fileName));
+};
+
+const renderFromUrl = () => {
+  const selectedImage = new URLSearchParams(window.location.search).get("image");
+
+  if (images.includes(selectedImage)) {
+    renderDetail(selectedImage);
+    return;
+  }
+
+  galleryView.hidden = false;
+  detailView.hidden = true;
+  detailImage.removeAttribute("src");
+  detailImage.alt = "";
+  document.title = "Вибір положення матки";
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -165,11 +196,7 @@ const addMyoma = () => {
 };
 
 renderGallery();
+renderFromUrl();
 
 addMyomaButton.addEventListener("click", addMyoma);
-
-const selectedImage = new URLSearchParams(window.location.search).get("image");
-
-if (images.includes(selectedImage)) {
-  renderDetail(selectedImage);
-}
+window.addEventListener("popstate", renderFromUrl);
