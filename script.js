@@ -9,7 +9,6 @@ const gallery = document.querySelector("#gallery");
 const galleryView = document.querySelector("#gallery-view");
 const detailView = document.querySelector("#detail-view");
 const detailImage = document.querySelector("#detail-image");
-const detailCaption = document.querySelector("#detail-caption");
 
 const getCaptionParts = (fileName) => fileName.replace(/\.png$/i, "").split("-");
 const getCaptionText = (fileName) => getCaptionParts(fileName).join(" ");
@@ -52,9 +51,6 @@ const renderDetail = (fileName) => {
 
   detailImage.src = fileName;
   detailImage.alt = getCaptionText(fileName);
-  detailCaption.replaceChildren(...getCaptionParts(fileName).flatMap((part, index) => {
-    return index === 0 ? [part] : [document.createElement("br"), part];
-  }));
   document.title = `${getCaptionText(fileName)} — Вибір положення матки`;
 };
 
