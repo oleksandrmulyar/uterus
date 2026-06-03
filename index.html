@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Вибір положення матки</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-live="polite">
+      <section id="gallery-view" class="view">
+        <p class="eyebrow">Навчальна галерея</p>
+        <h1>Оберіть одне із 4 зображень</h1>
+        <p class="lead">
+          Натисніть на картку, щоб відкрити вибране зображення окремо на сторінці.
+        </p>
+
+        <div class="gallery" id="gallery"></div>
+      </section>
+
+      <section id="detail-view" class="view detail" hidden>
+        <a class="back-link" href="./" aria-label="Повернутися до списку зображень">← Назад до вибору</a>
+        <figure class="detail-card">
+          <img id="detail-image" src="" alt="" />
+          <figcaption id="detail-caption" class="caption"></figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
