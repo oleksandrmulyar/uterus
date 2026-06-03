@@ -5,7 +5,11 @@ const images = [
   "retroversio-retroflexio.png",
 ];
 
-const figoCategories = ["FIGO1", "FIGO2", "FIGO3", "FIGO4", "FIGO5"];
+const figoCategories = ["FIGO1", "FIGO2", "FIGO3", "FIGO4", "FIGO5", "FIGO6", "FIGO7"];
+const figoRangeOptionValues = figoCategories.flatMap((startCategory, startIndex) =>
+  figoCategories.slice(startIndex + 1).map((endCategory) => `${startCategory}-${endCategory.replace("FIGO", "")}`),
+);
+const figoCategoryOptionsId = "figo-category-options";
 const markerStartPositions = {
   selected: { x: 50, y: 50 },
   reference: { x: 50, y: 50 },
@@ -228,38 +232,80 @@ const createMarker = (myomaId, myomaNumber, category, surface) => {
   return marker;
 };
 
-const createCategorySelect = (myomaId, myomaNumber, initialCategory) => {
-  const select = document.createElement("select");
-  select.className = "figo-select";
-  select.setAttribute("aria-label", `Категорія FIGO для утворення ${myomaNumber}`);
+const formatFigoCategory = (value) => {
+  const trimmedValue = value.trim();
 
-  figoCategories.forEach((category) => {
+  if (!trimmedValue) {
+    return figoCategories[0];
+  }
+
+  const normalizedValue = trimmedValue
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/^FIGO(?=\d)/, "FIGO")
+    .replace(/[–—]/g, "-");
+  const rangeMatch = normalizedValue.match(/^(?:FIGO)?([1-7])(?:-(?:FIGO)?([1-7]))?$/);
+
+  if (!rangeMatch) {
+    return trimmedValue;
+  }
+
+  const [, startCategory, endCategory] = rangeMatch;
+
+  if (!endCategory) {
+    return `FIGO${startCategory}`;
+  }
+
+  return `FIGO${startCategory}-${endCategory}`;
+};
+
+const createFigoCategoryOptions = () => {
+  const datalist = document.createElement("datalist");
+  datalist.id = figoCategoryOptionsId;
+
+  [...figoCategories, ...figoRangeOptionValues].forEach((category) => {
     const option = document.createElement("option");
     option.value = category;
-    option.textContent = category;
-    option.selected = category === initialCategory;
-    select.append(option);
+    datalist.append(option);
   });
 
-  select.addEventListener("change", () => {
-    const row = select.closest("tr[data-myoma-id]");
-    const currentMyomaNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? myomaNumber;
+  document.body.append(datalist);
+};
 
-    getMyomaMarkers(myomaId).forEach((marker) => {
-      setMarkerLabel(marker, currentMyomaNumber, select.value);
-    });
+const updateMyomaCategory = (myomaId, myomaNumber, input) => {
+  const row = input.closest("tr[data-myoma-id]");
+  const currentMyomaNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? myomaNumber;
+  const category = formatFigoCategory(input.value);
+
+  input.value = category;
+
+  getMyomaMarkers(myomaId).forEach((marker) => {
+    setMarkerLabel(marker, currentMyomaNumber, category);
   });
+};
 
-  return select;
+const createCategoryInput = (myomaId, myomaNumber, initialCategory) => {
+  const input = document.createElement("input");
+  input.className = "figo-input";
+  input.type = "text";
+  input.value = initialCategory;
+  input.setAttribute("list", figoCategoryOptionsId);
+  input.setAttribute("aria-label", `Категорія FIGO або діапазон для утворення ${myomaNumber}`);
+  input.setAttribute("placeholder", "FIGO1 або FIGO2-5");
+
+  input.addEventListener("change", () => updateMyomaCategory(myomaId, myomaNumber, input));
+  input.addEventListener("blur", () => updateMyomaCategory(myomaId, myomaNumber, input));
+
+  return input;
 };
 
 const renumberMyomas = () => {
   getMyomaRows().forEach((row, index) => {
     const myomaNumber = index + 1;
-    const category = row.querySelector(".figo-select").value;
+    const category = row.querySelector(".figo-input").value;
 
     row.querySelector("[data-myoma-number-cell]").textContent = myomaNumber;
-    row.querySelector(".figo-select").setAttribute("aria-label", `Категорія FIGO для утворення ${myomaNumber}`);
+    row.querySelector(".figo-input").setAttribute("aria-label", `Категорія FIGO або діапазон для утворення ${myomaNumber}`);
     row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
 
     getMyomaMarkers(row.dataset.myomaId).forEach((marker) => {
@@ -300,7 +346,7 @@ const addMyoma = () => {
   numberCell.textContent = myomaNumber;
 
   const categoryCell = document.createElement("td");
-  categoryCell.append(createCategorySelect(myomaId, myomaNumber, category));
+  categoryCell.append(createCategoryInput(myomaId, myomaNumber, category));
 
   const actionCell = document.createElement("td");
   actionCell.className = "myoma-action-cell";
@@ -312,6 +358,7 @@ const addMyoma = () => {
   markerSurfaces.forEach((surface) => createMarker(myomaId, myomaNumber, category, surface));
 };
 
+createFigoCategoryOptions();
 renderGallery();
 renderFromUrl();
 

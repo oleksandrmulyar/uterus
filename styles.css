@@ -305,7 +305,7 @@ h1 {
 
 .add-myoma-button:focus-visible,
 .delete-myoma-button:focus-visible,
-.figo-select:focus-visible {
+.figo-input:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 3px;
 }
@@ -340,7 +340,7 @@ h1 {
   border-bottom: 0;
 }
 
-.figo-select {
+.figo-input {
   width: min(240px, 100%);
   padding: 10px 12px;
   color: var(--text);
