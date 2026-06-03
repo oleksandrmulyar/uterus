@@ -140,15 +140,15 @@ h1 {
 .detail-workspace {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(260px, 420px) minmax(360px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(18px, 3vw, 30px);
   align-items: start;
 }
 
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(14px, 2vw, 18px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 24px);
 }
 
 .detail-card {
@@ -162,7 +162,7 @@ h1 {
 }
 
 .detail-card img {
-  max-height: min(38vh, 360px);
+  max-height: min(66vh, 680px);
   padding: clamp(6px, 1.2vw, 10px);
 }
 
@@ -175,13 +175,8 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .detail-workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .detail-layout {
-    width: min(420px, 100%);
-    justify-self: center;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -230,7 +225,7 @@ h1 {
   place-items: center;
   padding: 0;
   color: #fff;
-  font-size: 0.78rem;
+  font-size: clamp(0.5rem, calc(var(--marker-size) * 0.16), 0.95rem);
   font-weight: 900;
   line-height: 1;
   text-align: center;
