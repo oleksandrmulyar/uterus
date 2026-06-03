@@ -11,8 +11,8 @@ const markerStartPositions = {
   reference: { x: 50, y: 50 },
 };
 const markerDefaultSize = 58;
-const markerMinSize = 34;
-const markerMaxSize = 140;
+const markerMinSize = 16;
+const markerMaxSize = 320;
 const markerResizeEdgeWidth = 12;
 
 const gallery = document.querySelector("#gallery");
