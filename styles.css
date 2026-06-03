@@ -176,16 +176,6 @@ h1 {
   }
 }
 
-@media (max-width: 720px) {
-  .myoma-panel-header {
-    flex-direction: column;
-  }
-
-  .add-myoma-button {
-    width: 100%;
-  }
-}
-
 @media (max-width: 560px) {
   .app {
     width: min(100% - 20px, 1120px);
@@ -264,31 +254,22 @@ h1 {
 
 .myoma-panel-header {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 18px;
 }
 
-.myoma-panel h2 {
-  margin: 0;
-  color: var(--accent-dark);
-  font-size: clamp(1.25rem, 2.4vw, 1.65rem);
-}
-
-.myoma-panel p {
-  max-width: 620px;
-  margin: 6px 0 0;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
 .add-myoma-button {
+  display: inline-grid;
+  width: 48px;
+  height: 48px;
   flex: 0 0 auto;
-  padding: 11px 16px;
+  place-items: center;
+  padding: 0;
   color: #fff;
   font: inherit;
+  font-size: 1.8rem;
   font-weight: 800;
+  line-height: 1;
   background: var(--accent);
   border: 0;
   border-radius: 999px;
