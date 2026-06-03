@@ -29,7 +29,7 @@ body {
 }
 
 .app {
-  width: min(1120px, calc(100% - 32px));
+  width: min(1280px, calc(100% - 32px));
   margin: 0 auto;
   padding: 44px 0;
 }
@@ -121,7 +121,7 @@ h1 {
 .detail {
   min-height: calc(100vh - 112px);
   display: grid;
-  place-items: center;
+  align-content: center;
   gap: 18px;
 }
 
@@ -137,13 +137,18 @@ h1 {
   text-decoration: underline;
 }
 
+.detail-workspace {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(260px, 420px) minmax(360px, 1fr);
+  gap: clamp(18px, 3vw, 30px);
+  align-items: start;
+}
+
 .detail-layout {
   display: grid;
-  width: min(900px, 100%);
-  grid-template-columns: repeat(2, minmax(260px, 420px));
-  justify-content: center;
-  gap: clamp(18px, 3vw, 28px);
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 18px);
 }
 
 .detail-card {
@@ -157,7 +162,7 @@ h1 {
 }
 
 .detail-card img {
-  max-height: 46vh;
+  max-height: min(38vh, 360px);
   padding: clamp(6px, 1.2vw, 10px);
 }
 
@@ -170,9 +175,13 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .detail-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .detail-layout {
-    grid-template-columns: minmax(0, 420px);
-    justify-content: center;
+    width: min(420px, 100%);
+    justify-self: center;
   }
 }
 
@@ -212,11 +221,12 @@ h1 {
 }
 
 .myoma-marker {
+  --marker-size: 58px;
   position: absolute;
   z-index: 2;
   display: inline-grid;
-  width: 58px;
-  height: 58px;
+  width: var(--marker-size);
+  height: var(--marker-size);
   place-items: center;
   padding: 0;
   color: #fff;
@@ -243,8 +253,23 @@ h1 {
   transform: translate(-50%, -50%) scale(1.06);
 }
 
+.myoma-marker.is-resize-ready,
+.myoma-marker.is-resizing {
+  cursor: nwse-resize;
+}
+
+.myoma-marker.is-resize-ready::after,
+.myoma-marker.is-resizing::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 2px dashed rgba(128, 51, 72, 0.36);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .myoma-panel {
-  width: min(900px, 100%);
+  width: 100%;
   padding: clamp(16px, 2.4vw, 24px);
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(128, 51, 72, 0.12);
