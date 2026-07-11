@@ -258,10 +258,6 @@ h1 {
   background: color-mix(in srgb, var(--myoma-color, #27ae60) 78%, #fff 10%);
 }
 
-.endometrium-marker {
-  background: color-mix(in srgb, var(--myoma-color, #2f80ed) 78%, #fff 10%);
-}
-
 .myoma-marker.is-linear-shape {
   min-height: 8px;
   border-radius: 999px;

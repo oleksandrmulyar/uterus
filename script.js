@@ -25,16 +25,6 @@ const annotationConfigs = {
     numberLabel: "утвору",
     deleteLabel: "утвір",
   },
-  endometrium: {
-    listId: "endometrium-list",
-    defaultText: "",
-    placeholderText: "Назва ураження",
-    defaultShape: "округле",
-    inputClass: "annotation-label-input",
-    markerClass: "myoma-marker endometrium-marker",
-    numberLabel: "ураження",
-    deleteLabel: "ураження ендометрію",
-  },
 };
 const shapePresets = {
   "округле": { key: "round", width: 58, height: 58 },
@@ -68,13 +58,12 @@ const detailView = document.querySelector("#detail-view");
 const detailImage = document.querySelector("#detail-image");
 const addMyomaButton = document.querySelector("#add-myoma");
 const addFormationButton = document.querySelector("#add-formation");
-const addEndometriumButton = document.querySelector("#add-endometrium");
 const annotationLists = Object.fromEntries(
   Object.entries(annotationConfigs).map(([type, config]) => [type, document.querySelector(`#${config.listId}`)]),
 );
 const markerSurfaces = document.querySelectorAll("[data-marker-surface]");
 
-const annotationCounters = { myoma: 0, formation: 0, endometrium: 0 };
+const annotationCounters = { myoma: 0, formation: 0 };
 
 const getCaptionParts = (fileName) => fileName.replace(/\.png$/i, "").split("-");
 const getCaptionText = (fileName) => getCaptionParts(fileName).join(" ");
@@ -475,5 +464,4 @@ renderFromUrl();
 
 addMyomaButton.addEventListener("click", () => addAnnotation("myoma"));
 addFormationButton.addEventListener("click", () => addAnnotation("formation"));
-addEndometriumButton.addEventListener("click", () => addAnnotation("endometrium"));
 window.addEventListener("popstate", renderFromUrl);
