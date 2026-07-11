@@ -326,7 +326,10 @@ h1 {
 
 .add-myoma-button:focus-visible,
 .delete-myoma-button:focus-visible,
-.figo-input:focus-visible {
+.figo-input:focus-visible,
+.annotation-label-input:focus-visible,
+.shape-select:focus-visible,
+.color-input:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 3px;
 }
@@ -371,6 +374,7 @@ h1 {
 }
 
 .figo-input,
+.annotation-label-input,
 .shape-select {
   width: min(240px, 100%);
   padding: 10px 12px;
@@ -380,6 +384,16 @@ h1 {
   background: #fff;
   border: 1px solid rgba(128, 51, 72, 0.2);
   border-radius: 12px;
+}
+
+.color-input {
+  width: 48px;
+  height: 38px;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid rgba(128, 51, 72, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
 }
 
 .myoma-action-cell {
