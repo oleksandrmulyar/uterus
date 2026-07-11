@@ -12,7 +12,6 @@ const annotationConfigs = {
     defaultText: defaultFigoText,
     inputClass: "figo-input",
     markerClass: "myoma-marker",
-    shapes: ["round"],
     numberLabel: "утворення",
     deleteLabel: "утворення",
   },
@@ -21,16 +20,14 @@ const annotationConfigs = {
     defaultText: "округле",
     inputClass: "shape-select",
     markerClass: "myoma-marker formation-marker",
-    shapes: ["округле", "овальне"],
     numberLabel: "утвору",
     deleteLabel: "утвір",
   },
   endometrium: {
     listId: "endometrium-list",
-    defaultText: "продовгувате",
+    defaultText: "округле",
     inputClass: "shape-select",
     markerClass: "myoma-marker endometrium-marker",
-    shapes: ["продовгувате", "лінійне", "округле"],
     numberLabel: "ураження",
     deleteLabel: "ураження ендометрію",
   },
@@ -348,32 +345,11 @@ const updateAnnotationCategory = (annotationId, annotationNumber, input, type) =
   getMyomaMarkers(annotationId).forEach((marker) => {
     if (marker.dataset.annotationType !== type) return;
     setMarkerLabel(marker, currentNumber, category);
-    if (type !== "myoma") {
-      applyMarkerShape(marker, category, false);
-    }
   });
 };
 
 const createCategoryControl = (annotationId, annotationNumber, initialText, type) => {
   const config = annotationConfigs[type];
-
-  if (type !== "myoma") {
-    const select = document.createElement("select");
-    select.className = config.inputClass;
-    select.setAttribute("aria-label", `Форма для ${config.numberLabel} ${annotationNumber}`);
-
-    config.shapes.forEach((shape) => {
-      const option = document.createElement("option");
-      option.value = shape;
-      option.textContent = shape;
-      select.append(option);
-    });
-
-    select.value = initialText;
-    select.addEventListener("change", () => updateAnnotationCategory(annotationId, annotationNumber, select, type));
-    return select;
-  }
-
   const input = document.createElement("input");
   input.className = config.inputClass;
   input.type = "text";
@@ -395,7 +371,7 @@ const renumberAnnotations = (type = "myoma") => {
     const category = formatAnnotationLabel(getRowValue(row, type), type);
 
     row.querySelector("[data-myoma-number-cell]").textContent = annotationNumber;
-    row.querySelector(`.${config.inputClass}`).setAttribute("aria-label", type === "myoma" ? `Текст після FIGO для утворення ${annotationNumber}` : `Форма для ${config.numberLabel} ${annotationNumber}`);
+    row.querySelector(`.${config.inputClass}`)?.setAttribute("aria-label", `Текст після FIGO для утворення ${annotationNumber}`);
     row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити ${config.deleteLabel} ${annotationNumber}`);
     setMyomaColor(row.dataset.myomaId, annotationNumber, type);
 
@@ -443,13 +419,19 @@ const addAnnotation = (type = "myoma") => {
   numberCell.textContent = annotationNumber;
 
   const categoryCell = document.createElement("td");
-  categoryCell.append(createCategoryControl(annotationId, annotationNumber, initialText, type));
+  if (type === "myoma") {
+    categoryCell.append(createCategoryControl(annotationId, annotationNumber, initialText, type));
+  }
 
   const actionCell = document.createElement("td");
   actionCell.className = "myoma-action-cell";
   actionCell.append(createDeleteButton(row, annotationNumber, type));
 
-  row.append(numberCell, categoryCell, actionCell);
+  row.append(numberCell);
+  if (type === "myoma") {
+    row.append(categoryCell);
+  }
+  row.append(actionCell);
   annotationLists[type].append(row);
 
   markerSurfaces.forEach((surface) => createMarker(annotationId, annotationNumber, category, surface, type, initialText));
