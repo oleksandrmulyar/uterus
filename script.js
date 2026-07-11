@@ -125,6 +125,19 @@ const getSafeFilePart = (value, fallback = "image") =>
     .replace(/[^a-z0-9а-яіїєґ_-]+/giu, "-")
     .replace(/^-+|-+$/g, "") || fallback;
 
+const getFileNameFromImageSource = (source) => {
+  const pathName = new URL(source, window.location.href).pathname;
+  return decodeURIComponent(pathName.split("/").pop() || "image");
+};
+
+const getDownloadDatePart = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 const drawRoundedRect = (context, x, y, width, height, radius) => {
   const safeRadius = Math.min(radius, width / 2, height / 2);
 
@@ -206,8 +219,8 @@ const downloadSurfaceImage = (surfaceName) => {
   stage.querySelectorAll(".myoma-marker").forEach((marker) => drawMarkerToCanvas(context, marker, scale));
 
   const link = document.createElement("a");
-  const selectedName = getSafeFilePart(new URLSearchParams(window.location.search).get("image"), "selected-image");
-  link.download = `${surfaceName === "selected" ? "1" : "2"}-${selectedName}.png`;
+  const imageName = getSafeFilePart(getFileNameFromImageSource(image.currentSrc || image.src));
+  link.download = `${imageName}-${getDownloadDatePart()}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
 };
