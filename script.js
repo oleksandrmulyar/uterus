@@ -62,6 +62,7 @@ const annotationLists = Object.fromEntries(
   Object.entries(annotationConfigs).map(([type, config]) => [type, document.querySelector(`#${config.listId}`)]),
 );
 const markerSurfaces = document.querySelectorAll("[data-marker-surface]");
+const downloadImageButtons = document.querySelectorAll("[data-download-surface]");
 
 const annotationCounters = { myoma: 0, formation: 0 };
 
@@ -114,6 +115,101 @@ const renderDetail = (fileName) => {
   detailImage.src = fileName;
   detailImage.alt = getCaptionText(fileName);
   document.title = `${getCaptionText(fileName)} — Вибір положення матки`;
+};
+
+
+const getSafeFilePart = (value, fallback = "image") =>
+  (value || fallback)
+    .replace(/\.png$/i, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яіїєґ_-]+/giu, "-")
+    .replace(/^-+|-+$/g, "") || fallback;
+
+const drawRoundedRect = (context, x, y, width, height, radius) => {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+};
+
+const getImageDrawBox = (image, stageWidth, stageHeight) => {
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const stageRatio = stageWidth / stageHeight;
+
+  if (imageRatio > stageRatio) {
+    const width = stageWidth;
+    const height = width / imageRatio;
+    return { x: 0, y: (stageHeight - height) / 2, width, height };
+  }
+
+  const height = stageHeight;
+  const width = height * imageRatio;
+  return { x: (stageWidth - width) / 2, y: 0, width, height };
+};
+
+const drawMarkerToCanvas = (context, marker, scale) => {
+  const x = (Number(marker.dataset.x) / 100) * context.canvas.width;
+  const y = (Number(marker.dataset.y) / 100) * context.canvas.height;
+  const width = Number(marker.dataset.width || markerDefaultSize) * scale;
+  const height = Number(marker.dataset.height || marker.dataset.width || markerDefaultSize) * scale;
+  const left = x - width / 2;
+  const top = y - height / 2;
+  const color = marker.dataset.myomaColor || getComputedStyle(marker).getPropertyValue("--myoma-color") || "#b64f6a";
+
+  context.save();
+  context.fillStyle = color.trim();
+  drawRoundedRect(context, left, top, width, height, Math.max(width, height) / 2);
+  context.fill();
+
+  const label = marker.textContent.trim();
+  if (label) {
+    context.fillStyle = "#fff";
+    context.font = `900 ${Math.max(12, Math.min(width, height) * 0.22)}px sans-serif`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(label, x, y, width * 0.82);
+  }
+
+  context.restore();
+};
+
+const downloadSurfaceImage = (surfaceName) => {
+  const stage = document.querySelector(`[data-marker-surface="${surfaceName}"]`);
+  const image = stage?.querySelector("img");
+
+  if (!stage || !image?.complete || !image.naturalWidth || !image.naturalHeight) {
+    return;
+  }
+
+  const stageRect = stage.getBoundingClientRect();
+  const scale = image.naturalWidth / stageRect.width;
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = Math.round(stageRect.height * scale);
+
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#fff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const drawBox = getImageDrawBox(image, canvas.width, canvas.height);
+  context.drawImage(image, drawBox.x, drawBox.y, drawBox.width, drawBox.height);
+
+  stage.querySelectorAll(".myoma-marker").forEach((marker) => drawMarkerToCanvas(context, marker, scale));
+
+  const link = document.createElement("a");
+  const selectedName = getSafeFilePart(new URLSearchParams(window.location.search).get("image"), "selected-image");
+  link.download = `${surfaceName === "selected" ? "1" : "2"}-${selectedName}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 };
 
 const openImage = (fileName) => {
@@ -464,4 +560,7 @@ renderFromUrl();
 
 addMyomaButton.addEventListener("click", () => addAnnotation("myoma"));
 addFormationButton.addEventListener("click", () => addAnnotation("formation"));
+downloadImageButtons.forEach((button) => {
+  button.addEventListener("click", () => downloadSurfaceImage(button.dataset.downloadSurface));
+});
 window.addEventListener("popstate", renderFromUrl);
