@@ -6,6 +6,41 @@ const images = [
 ];
 
 const defaultFigoText = "1";
+const annotationConfigs = {
+  myoma: {
+    listId: "myoma-list",
+    defaultText: defaultFigoText,
+    inputClass: "figo-input",
+    markerClass: "myoma-marker",
+    shapes: ["round"],
+    numberLabel: "утворення",
+    deleteLabel: "утворення",
+  },
+  formation: {
+    listId: "formation-list",
+    defaultText: "округле",
+    inputClass: "shape-select",
+    markerClass: "myoma-marker formation-marker",
+    shapes: ["округле", "овальне"],
+    numberLabel: "утвору",
+    deleteLabel: "утвір",
+  },
+  endometrium: {
+    listId: "endometrium-list",
+    defaultText: "продовгувате",
+    inputClass: "shape-select",
+    markerClass: "myoma-marker endometrium-marker",
+    shapes: ["продовгувате", "лінійне", "округле"],
+    numberLabel: "ураження",
+    deleteLabel: "ураження ендометрію",
+  },
+};
+const shapePresets = {
+  "округле": { key: "round", width: 58, height: 58, forceCircle: true },
+  "овальне": { key: "oval", width: 82, height: 52 },
+  "продовгувате": { key: "elongated", width: 96, height: 38 },
+  "лінійне": { key: "linear", width: 120, height: 16 },
+};
 const markerStartPositions = {
   selected: { x: 50, y: 50 },
   reference: { x: 50, y: 50 },
@@ -13,6 +48,7 @@ const markerStartPositions = {
 const markerDefaultSize = 58;
 const markerMinSize = 16;
 const markerMaxSize = 320;
+const markerMinHeight = 8;
 const markerResizeEdgeWidth = 12;
 const myomaColors = [
   "#d93f5c",
@@ -30,10 +66,14 @@ const galleryView = document.querySelector("#gallery-view");
 const detailView = document.querySelector("#detail-view");
 const detailImage = document.querySelector("#detail-image");
 const addMyomaButton = document.querySelector("#add-myoma");
-const myomaList = document.querySelector("#myoma-list");
+const addFormationButton = document.querySelector("#add-formation");
+const addEndometriumButton = document.querySelector("#add-endometrium");
+const annotationLists = Object.fromEntries(
+  Object.entries(annotationConfigs).map(([type, config]) => [type, document.querySelector(`#${config.listId}`)]),
+);
 const markerSurfaces = document.querySelectorAll("[data-marker-surface]");
 
-let myomaIdCounter = 0;
+const annotationCounters = { myoma: 0, formation: 0, endometrium: 0 };
 
 const getCaptionParts = (fileName) => fileName.replace(/\.png$/i, "").split("-");
 const getCaptionText = (fileName) => getCaptionParts(fileName).join(" ");
@@ -119,28 +159,46 @@ const updateMarkerPosition = (marker, x, y) => {
   marker.style.top = `${y}%`;
 };
 
-const updateMarkerSize = (marker, size) => {
-  const nextSize = clamp(size, markerMinSize, markerMaxSize);
+const updateMarkerSize = (marker, width, height = width) => {
+  const forceCircle = marker.dataset.forceCircle === "true";
+  const nextWidth = clamp(width, markerMinSize, markerMaxSize);
+  const nextHeight = forceCircle ? nextWidth : clamp(height, markerMinHeight, markerMaxSize);
 
-  marker.dataset.size = nextSize;
-  marker.style.setProperty("--marker-size", `${nextSize}px`);
+  marker.dataset.width = nextWidth;
+  marker.dataset.height = nextHeight;
+  marker.dataset.size = nextWidth;
+  marker.style.setProperty("--marker-width", `${nextWidth}px`);
+  marker.style.setProperty("--marker-height", `${nextHeight}px`);
+  marker.style.setProperty("--marker-size", `${Math.max(nextWidth, nextHeight)}px`);
 };
 
-const getPointerDistanceFromMarkerCenter = (marker, event) => {
-  const rect = marker.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const offsetX = event.clientX - centerX;
-  const offsetY = event.clientY - centerY;
+const getShapePreset = (shape) => shapePresets[shape] ?? shapePresets["округле"];
 
-  return Math.hypot(offsetX, offsetY);
+const applyMarkerShape = (marker, shape, preserveSize = false) => {
+  const preset = getShapePreset(shape);
+
+  marker.dataset.shape = preset.key;
+  marker.dataset.forceCircle = String(Boolean(preset.forceCircle));
+  marker.classList.toggle("is-linear-shape", preset.key === "linear");
+
+  if (!preserveSize) {
+    updateMarkerSize(marker, preset.width, preset.height);
+  } else if (preset.forceCircle) {
+    const size = Math.max(Number(marker.dataset.width) || preset.width, Number(marker.dataset.height) || preset.height);
+    updateMarkerSize(marker, size, size);
+  }
 };
 
 const isPointerOnMarkerEdge = (marker, event) => {
-  const radius = marker.getBoundingClientRect().width / 2;
-  const distance = getPointerDistanceFromMarkerCenter(marker, event);
+  const rect = marker.getBoundingClientRect();
+  const edgeDistance = Math.min(
+    Math.abs(event.clientX - rect.left),
+    Math.abs(event.clientX - rect.right),
+    Math.abs(event.clientY - rect.top),
+    Math.abs(event.clientY - rect.bottom),
+  );
 
-  return distance >= radius - markerResizeEdgeWidth;
+  return edgeDistance <= markerResizeEdgeWidth;
 };
 
 const resizeMarkerFromPointer = (marker, event) => {
@@ -148,9 +206,15 @@ const resizeMarkerFromPointer = (marker, event) => {
   const stageRect = stage.getBoundingClientRect();
   const centerX = stageRect.left + (Number(marker.dataset.x) / 100) * stageRect.width;
   const centerY = stageRect.top + (Number(marker.dataset.y) / 100) * stageRect.height;
-  const diameter = Math.hypot(event.clientX - centerX, event.clientY - centerY) * 2;
+  const nextWidth = Math.abs(event.clientX - centerX) * 2;
+  const nextHeight = Math.abs(event.clientY - centerY) * 2;
 
-  updateMarkerSize(marker, diameter);
+  if (marker.dataset.forceCircle === "true") {
+    updateMarkerSize(marker, Math.hypot(event.clientX - centerX, event.clientY - centerY) * 2);
+    return;
+  }
+
+  updateMarkerSize(marker, nextWidth, nextHeight);
 };
 
 const makeMarkerInteractive = (marker) => {
@@ -207,14 +271,14 @@ const makeMarkerInteractive = (marker) => {
   marker.addEventListener("pointercancel", stopInteraction);
 };
 
-const getMyomaRows = () => [...myomaList.querySelectorAll("tr[data-myoma-id]")];
+const getMyomaRows = (type = "myoma") => [...annotationLists[type].querySelectorAll("tr[data-myoma-id]")];
 
 const getMyomaMarkers = (myomaId) =>
   document.querySelectorAll(`.myoma-marker[data-myoma-id="${myomaId}"]`);
 
 const getMyomaColor = (myomaNumber) => myomaColors[(myomaNumber - 1) % myomaColors.length];
 
-const setMyomaColor = (myomaId, myomaNumber) => {
+const setMyomaColor = (myomaId, myomaNumber, type = "myoma") => {
   const color = getMyomaColor(myomaNumber);
 
   getMyomaMarkers(myomaId).forEach((marker) => {
@@ -222,30 +286,32 @@ const setMyomaColor = (myomaId, myomaNumber) => {
     marker.dataset.myomaColor = color;
   });
 
-  const row = myomaList.querySelector(`tr[data-myoma-id="${myomaId}"]`);
+  const row = annotationLists[type].querySelector(`tr[data-myoma-id="${myomaId}"]`);
   row?.style.setProperty("--myoma-color", color);
 };
 
 const setMarkerLabel = (marker, myomaNumber, category) => {
   marker.textContent = category;
-  marker.dataset.myomaNumber = myomaNumber;
+  marker.dataset.annotationNumber = myomaNumber;
   marker.setAttribute(
     "aria-label",
-    `Міома ${myomaNumber}, ${category}. Перетягніть коло по зображенню або потягніть за край, щоб змінити розмір.`,
+    `${category} ${myomaNumber}. Перетягніть позначку по зображенню або потягніть за край, щоб змінити розмір і форму.`,
   );
 };
 
-const createMarker = (myomaId, myomaNumber, category, surface) => {
+const createMarker = (myomaId, myomaNumber, category, surface, type = "myoma", shape = "округле") => {
+  const config = annotationConfigs[type];
   const marker = document.createElement("button");
-  marker.className = "myoma-marker";
+  marker.className = config.markerClass;
   marker.type = "button";
   marker.dataset.myomaId = myomaId;
+  marker.dataset.annotationType = type;
   marker.dataset.surface = surface.dataset.markerSurface;
   setMarkerLabel(marker, myomaNumber, category);
 
   const startPosition = markerStartPositions[marker.dataset.surface];
   updateMarkerPosition(marker, startPosition.x, startPosition.y);
-  updateMarkerSize(marker, markerDefaultSize);
+  applyMarkerShape(marker, shape);
   makeMarkerInteractive(marker);
 
   surface.append(marker);
@@ -258,94 +324,142 @@ const formatFigoLabel = (value) => {
   return `FIGO${figoText}`;
 };
 
-const updateMyomaCategory = (myomaId, myomaNumber, input) => {
-  const row = input.closest("tr[data-myoma-id]");
-  const currentMyomaNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? myomaNumber;
-  const category = formatFigoLabel(input.value);
 
-  getMyomaMarkers(myomaId).forEach((marker) => {
-    setMarkerLabel(marker, currentMyomaNumber, category);
+const getRowValue = (row, type) => {
+  const config = annotationConfigs[type];
+  const control = row.querySelector(`.${config.inputClass}`);
+
+  return control?.value ?? config.defaultText;
+};
+
+const formatAnnotationLabel = (value, type) => {
+  if (type === "myoma") {
+    return formatFigoLabel(value);
+  }
+
+  return value.trim() || annotationConfigs[type].defaultText;
+};
+
+const updateAnnotationCategory = (annotationId, annotationNumber, input, type) => {
+  const row = input.closest("tr[data-myoma-id]");
+  const currentNumber = row?.querySelector("[data-myoma-number-cell]")?.textContent ?? annotationNumber;
+  const category = formatAnnotationLabel(input.value, type);
+
+  getMyomaMarkers(annotationId).forEach((marker) => {
+    if (marker.dataset.annotationType !== type) return;
+    setMarkerLabel(marker, currentNumber, category);
+    if (type !== "myoma") {
+      applyMarkerShape(marker, category, false);
+    }
   });
 };
 
-const createCategoryInput = (myomaId, myomaNumber, initialText) => {
+const createCategoryControl = (annotationId, annotationNumber, initialText, type) => {
+  const config = annotationConfigs[type];
+
+  if (type !== "myoma") {
+    const select = document.createElement("select");
+    select.className = config.inputClass;
+    select.setAttribute("aria-label", `Форма для ${config.numberLabel} ${annotationNumber}`);
+
+    config.shapes.forEach((shape) => {
+      const option = document.createElement("option");
+      option.value = shape;
+      option.textContent = shape;
+      select.append(option);
+    });
+
+    select.value = initialText;
+    select.addEventListener("change", () => updateAnnotationCategory(annotationId, annotationNumber, select, type));
+    return select;
+  }
+
   const input = document.createElement("input");
-  input.className = "figo-input";
+  input.className = config.inputClass;
   input.type = "text";
   input.value = initialText;
-  input.setAttribute("aria-label", `Текст після FIGO для утворення ${myomaNumber}`);
+  input.setAttribute("aria-label", `Текст після FIGO для утворення ${annotationNumber}`);
   input.setAttribute("placeholder", "1 або 2-3");
 
-  input.addEventListener("input", () => updateMyomaCategory(myomaId, myomaNumber, input));
-  input.addEventListener("change", () => updateMyomaCategory(myomaId, myomaNumber, input));
+  input.addEventListener("input", () => updateAnnotationCategory(annotationId, annotationNumber, input, type));
+  input.addEventListener("change", () => updateAnnotationCategory(annotationId, annotationNumber, input, type));
 
   return input;
 };
 
-const renumberMyomas = () => {
-  getMyomaRows().forEach((row, index) => {
-    const myomaNumber = index + 1;
-    const category = formatFigoLabel(row.querySelector(".figo-input").value);
+const renumberAnnotations = (type = "myoma") => {
+  const config = annotationConfigs[type];
 
-    row.querySelector("[data-myoma-number-cell]").textContent = myomaNumber;
-    row.querySelector(".figo-input").setAttribute("aria-label", `Текст після FIGO для утворення ${myomaNumber}`);
-    row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
-    setMyomaColor(row.dataset.myomaId, myomaNumber);
+  getMyomaRows(type).forEach((row, index) => {
+    const annotationNumber = index + 1;
+    const category = formatAnnotationLabel(getRowValue(row, type), type);
+
+    row.querySelector("[data-myoma-number-cell]").textContent = annotationNumber;
+    row.querySelector(`.${config.inputClass}`).setAttribute("aria-label", type === "myoma" ? `Текст після FIGO для утворення ${annotationNumber}` : `Форма для ${config.numberLabel} ${annotationNumber}`);
+    row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити ${config.deleteLabel} ${annotationNumber}`);
+    setMyomaColor(row.dataset.myomaId, annotationNumber, type);
 
     getMyomaMarkers(row.dataset.myomaId).forEach((marker) => {
-      setMarkerLabel(marker, myomaNumber, category);
+      if (marker.dataset.annotationType === type) {
+        setMarkerLabel(marker, annotationNumber, category);
+      }
     });
   });
 };
 
-const deleteMyoma = (row) => {
+const deleteAnnotation = (row, type) => {
   getMyomaMarkers(row.dataset.myomaId).forEach((marker) => marker.remove());
   row.remove();
-  renumberMyomas();
+  renumberAnnotations(type);
 };
 
-const createDeleteButton = (row, myomaNumber) => {
+const createDeleteButton = (row, annotationNumber, type) => {
+  const config = annotationConfigs[type];
   const button = document.createElement("button");
   button.className = "delete-myoma-button";
   button.type = "button";
   button.textContent = "×";
-  button.setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
+  button.setAttribute("aria-label", `Видалити ${config.deleteLabel} ${annotationNumber}`);
 
-  button.addEventListener("click", () => deleteMyoma(row));
+  button.addEventListener("click", () => deleteAnnotation(row, type));
 
   return button;
 };
 
-const addMyoma = () => {
-  myomaIdCounter += 1;
-  const myomaId = String(myomaIdCounter);
-  const myomaNumber = getMyomaRows().length + 1;
-  const figoText = defaultFigoText;
-  const category = formatFigoLabel(figoText);
+const addAnnotation = (type = "myoma") => {
+  annotationCounters[type] += 1;
+  const config = annotationConfigs[type];
+  const annotationId = `${type}-${annotationCounters[type]}`;
+  const annotationNumber = getMyomaRows(type).length + 1;
+  const initialText = config.defaultText;
+  const category = formatAnnotationLabel(initialText, type);
 
   const row = document.createElement("tr");
-  row.dataset.myomaId = myomaId;
+  row.dataset.myomaId = annotationId;
+  row.dataset.annotationType = type;
 
   const numberCell = document.createElement("td");
   numberCell.dataset.myomaNumberCell = "";
-  numberCell.textContent = myomaNumber;
+  numberCell.textContent = annotationNumber;
 
   const categoryCell = document.createElement("td");
-  categoryCell.append(createCategoryInput(myomaId, myomaNumber, figoText));
+  categoryCell.append(createCategoryControl(annotationId, annotationNumber, initialText, type));
 
   const actionCell = document.createElement("td");
   actionCell.className = "myoma-action-cell";
-  actionCell.append(createDeleteButton(row, myomaNumber));
+  actionCell.append(createDeleteButton(row, annotationNumber, type));
 
   row.append(numberCell, categoryCell, actionCell);
-  myomaList.append(row);
+  annotationLists[type].append(row);
 
-  markerSurfaces.forEach((surface) => createMarker(myomaId, myomaNumber, category, surface));
-  setMyomaColor(myomaId, myomaNumber);
+  markerSurfaces.forEach((surface) => createMarker(annotationId, annotationNumber, category, surface, type, initialText));
+  setMyomaColor(annotationId, annotationNumber, type);
 };
 
 renderGallery();
 renderFromUrl();
 
-addMyomaButton.addEventListener("click", addMyoma);
+addMyomaButton.addEventListener("click", () => addAnnotation("myoma"));
+addFormationButton.addEventListener("click", () => addAnnotation("formation"));
+addEndometriumButton.addEventListener("click", () => addAnnotation("endometrium"));
 window.addEventListener("popstate", renderFromUrl);

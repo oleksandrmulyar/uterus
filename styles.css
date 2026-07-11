@@ -221,12 +221,12 @@ h1 {
   position: absolute;
   z-index: 2;
   display: inline-grid;
-  width: var(--marker-size);
-  height: var(--marker-size);
+  width: var(--marker-width, var(--marker-size));
+  height: var(--marker-height, var(--marker-size));
   place-items: center;
   padding: 0;
   color: #fff;
-  font-size: clamp(0.5rem, calc(var(--marker-size) * 0.16), 0.95rem);
+  font-size: clamp(0.5rem, calc(min(var(--marker-width, var(--marker-size)), var(--marker-height, var(--marker-size))) * 0.16), 0.95rem);
   font-weight: 900;
   line-height: 1;
   text-align: center;
@@ -254,6 +254,19 @@ h1 {
   cursor: nwse-resize;
 }
 
+.formation-marker {
+  background: color-mix(in srgb, var(--myoma-color, #27ae60) 78%, #fff 10%);
+}
+
+.endometrium-marker {
+  background: color-mix(in srgb, var(--myoma-color, #2f80ed) 78%, #fff 10%);
+}
+
+.myoma-marker.is-linear-shape {
+  min-height: 8px;
+  border-radius: 999px;
+}
+
 .myoma-marker.is-resize-ready::after,
 .myoma-marker.is-resizing::after {
   content: "";
@@ -275,8 +288,16 @@ h1 {
 
 .myoma-panel-header {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
+}
+
+.myoma-panel-header h2 {
+  margin: 0;
+  color: var(--accent-dark);
+  font-size: 1.1rem;
 }
 
 .add-myoma-button {
@@ -349,7 +370,8 @@ h1 {
   font-weight: 900;
 }
 
-.figo-input {
+.figo-input,
+.shape-select {
   width: min(240px, 100%);
   padding: 10px 12px;
   color: var(--text);
