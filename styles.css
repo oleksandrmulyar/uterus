@@ -328,7 +328,6 @@ h1 {
 .delete-myoma-button:focus-visible,
 .figo-input:focus-visible,
 .annotation-label-input:focus-visible,
-.shape-select:focus-visible,
 .color-input:focus-visible {
   outline: 4px solid var(--ring);
   outline-offset: 3px;
@@ -374,8 +373,7 @@ h1 {
 }
 
 .figo-input,
-.annotation-label-input,
-.shape-select {
+.annotation-label-input {
   width: min(240px, 100%);
   padding: 10px 12px;
   color: var(--text);
