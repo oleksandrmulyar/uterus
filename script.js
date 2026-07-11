@@ -17,7 +17,8 @@ const annotationConfigs = {
   },
   formation: {
     listId: "formation-list",
-    defaultText: "Утвір",
+    defaultText: "",
+    placeholderText: "Назва утвору",
     defaultShape: "округле",
     inputClass: "annotation-label-input",
     markerClass: "myoma-marker formation-marker",
@@ -26,7 +27,8 @@ const annotationConfigs = {
   },
   endometrium: {
     listId: "endometrium-list",
-    defaultText: "Ураження",
+    defaultText: "",
+    placeholderText: "Назва ураження",
     defaultShape: "округле",
     inputClass: "annotation-label-input",
     markerClass: "myoma-marker endometrium-marker",
@@ -35,7 +37,7 @@ const annotationConfigs = {
   },
 };
 const shapePresets = {
-  "округле": { key: "round", width: 58, height: 58, forceCircle: true },
+  "округле": { key: "round", width: 58, height: 58 },
   "овальне": { key: "oval", width: 82, height: 52 },
   "продовгувате": { key: "elongated", width: 96, height: 38 },
   "лінійне": { key: "linear", width: 120, height: 16 },
@@ -302,9 +304,12 @@ const setMyomaColor = (myomaId, myomaNumber, type = "myoma") => {
 const setMarkerLabel = (marker, myomaNumber, category) => {
   marker.textContent = category;
   marker.dataset.annotationNumber = myomaNumber;
+
+  const markerLabel = category ? `${category} ${myomaNumber}` : `Позначка ${myomaNumber}`;
+
   marker.setAttribute(
     "aria-label",
-    `${category} ${myomaNumber}. Перетягніть позначку по зображенню або потягніть за край, щоб змінити розмір і форму.`,
+    `${markerLabel}. Перетягніть позначку по зображенню або потягніть за край, щоб змінити розмір і форму.`,
   );
 };
 
@@ -346,7 +351,7 @@ const formatAnnotationLabel = (value, type) => {
     return formatFigoLabel(value);
   }
 
-  return value.trim() || annotationConfigs[type].defaultText;
+  return value.trim();
 };
 
 const updateAnnotationCategory = (annotationId, annotationNumber, input, type) => {
@@ -367,36 +372,12 @@ const createCategoryControl = (annotationId, annotationNumber, initialText, type
   input.type = "text";
   input.value = initialText;
   input.setAttribute("aria-label", type === "myoma" ? `Текст після FIGO для утворення ${annotationNumber}` : `Назва для ${config.numberLabel} ${annotationNumber}`);
-  input.setAttribute("placeholder", type === "myoma" ? "1 або 2-3" : config.defaultText);
+  input.setAttribute("placeholder", type === "myoma" ? "1 або 2-3" : config.placeholderText);
 
   input.addEventListener("input", () => updateAnnotationCategory(annotationId, annotationNumber, input, type));
   input.addEventListener("change", () => updateAnnotationCategory(annotationId, annotationNumber, input, type));
 
   return input;
-};
-
-const createShapeControl = (annotationId, initialShape, type) => {
-  const select = document.createElement("select");
-  select.className = "shape-select";
-  select.setAttribute("aria-label", "Форма позначки");
-
-  Object.keys(shapePresets).forEach((shape) => {
-    const option = document.createElement("option");
-    option.value = shape;
-    option.textContent = shape;
-    option.selected = shape === initialShape;
-    select.append(option);
-  });
-
-  select.addEventListener("change", () => {
-    getMyomaMarkers(annotationId).forEach((marker) => {
-      if (marker.dataset.annotationType === type) {
-        applyMarkerShape(marker, select.value);
-      }
-    });
-  });
-
-  return select;
 };
 
 const createColorControl = (annotationId, annotationNumber, type) => {
@@ -457,7 +438,7 @@ const addAnnotation = (type = "myoma") => {
   const config = annotationConfigs[type];
   const annotationId = `${type}-${annotationCounters[type]}`;
   const annotationNumber = getMyomaRows(type).length + 1;
-  const initialText = type === "myoma" ? config.defaultText : `${config.defaultText} ${annotationNumber}`;
+  const initialText = config.defaultText;
   const initialShape = config.defaultShape ?? "округле";
   const category = formatAnnotationLabel(initialText, type);
 
@@ -472,10 +453,6 @@ const addAnnotation = (type = "myoma") => {
   const categoryCell = document.createElement("td");
   categoryCell.append(createCategoryControl(annotationId, annotationNumber, initialText, type));
 
-  const shapeCell = document.createElement("td");
-  if (type !== "myoma") {
-    shapeCell.append(createShapeControl(annotationId, initialShape, type));
-  }
 
   const colorCell = document.createElement("td");
   colorCell.append(createColorControl(annotationId, annotationNumber, type));
@@ -486,9 +463,6 @@ const addAnnotation = (type = "myoma") => {
 
   row.append(numberCell);
   row.append(categoryCell);
-  if (type !== "myoma") {
-    row.append(shapeCell);
-  }
   row.append(colorCell, actionCell);
   annotationLists[type].append(row);
 
