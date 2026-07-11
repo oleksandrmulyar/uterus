@@ -14,6 +14,16 @@ const markerDefaultSize = 58;
 const markerMinSize = 16;
 const markerMaxSize = 320;
 const markerResizeEdgeWidth = 12;
+const myomaColors = [
+  "#d93f5c",
+  "#2f80ed",
+  "#27ae60",
+  "#f2994a",
+  "#9b51e0",
+  "#00a6a6",
+  "#eb5757",
+  "#6fcf97",
+];
 
 const gallery = document.querySelector("#gallery");
 const galleryView = document.querySelector("#gallery-view");
@@ -202,6 +212,20 @@ const getMyomaRows = () => [...myomaList.querySelectorAll("tr[data-myoma-id]")];
 const getMyomaMarkers = (myomaId) =>
   document.querySelectorAll(`.myoma-marker[data-myoma-id="${myomaId}"]`);
 
+const getMyomaColor = (myomaNumber) => myomaColors[(myomaNumber - 1) % myomaColors.length];
+
+const setMyomaColor = (myomaId, myomaNumber) => {
+  const color = getMyomaColor(myomaNumber);
+
+  getMyomaMarkers(myomaId).forEach((marker) => {
+    marker.style.setProperty("--myoma-color", color);
+    marker.dataset.myomaColor = color;
+  });
+
+  const row = myomaList.querySelector(`tr[data-myoma-id="${myomaId}"]`);
+  row?.style.setProperty("--myoma-color", color);
+};
+
 const setMarkerLabel = (marker, myomaNumber, category) => {
   marker.textContent = category;
   marker.dataset.myomaNumber = myomaNumber;
@@ -266,6 +290,7 @@ const renumberMyomas = () => {
     row.querySelector("[data-myoma-number-cell]").textContent = myomaNumber;
     row.querySelector(".figo-input").setAttribute("aria-label", `Текст після FIGO для утворення ${myomaNumber}`);
     row.querySelector(".delete-myoma-button").setAttribute("aria-label", `Видалити утворення ${myomaNumber}`);
+    setMyomaColor(row.dataset.myomaId, myomaNumber);
 
     getMyomaMarkers(row.dataset.myomaId).forEach((marker) => {
       setMarkerLabel(marker, myomaNumber, category);
@@ -316,6 +341,7 @@ const addMyoma = () => {
   myomaList.append(row);
 
   markerSurfaces.forEach((surface) => createMarker(myomaId, myomaNumber, category, surface));
+  setMyomaColor(myomaId, myomaNumber);
 };
 
 renderGallery();
